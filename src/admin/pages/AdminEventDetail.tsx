@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import * as XLSX from 'xlsx';
 import {
   ArrowLeft,
   Calendar,
@@ -28,6 +29,51 @@ export default function EventDetail() {
   const [filteredAttendees, setFilteredAttendees] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const { id } = useParams();
+
+  const exportToExcel = () => {
+    // Prepare the data for Excel
+    const data = filteredAttendees.map(attendee => ({
+      'Name': attendee?.scout?.fullName || 'N/A',
+      'Section': attendee?.scout?.section || 'N/A',
+      'RSVP': attendee?.status || 'N/A',
+      'Email': attendee?.scout?.email || 'N/A',
+      'Phone': attendee?.scout?.phoneNumber || 'N/A'
+    }));
+
+    // Create a new workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    // Set column widths
+    const wscols = [
+      { wch: 30 }, // Name
+      { wch: 15 }, // Section
+      { wch: 15 }, // RSVP
+      { wch: 30 }, // Email
+      { wch: 20 }  // Phone
+    ];
+    ws['!cols'] = wscols;
+
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Event Attendees');
+
+    // Generate the Excel file
+    const eventName = eventInfo?.title?.replace(/[^\w\s]/gi, '') || 'event';
+    XLSX.writeFile(wb, `${eventName}_attendees_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toLowerCase();
+    setSearchQuery(value);
+    if (value === "") {
+      setFilteredAttendees(allAttendees);
+    } else {
+      const filtered = allAttendees.filter((attendee) =>
+        attendee?.scout?.fullName?.toLowerCase().includes(value)
+      );
+      setFilteredAttendees(filtered);
+    }
+  };
 
   const fetchEventInfo = async () => {
     try {
@@ -285,9 +331,9 @@ export default function EventDetail() {
               <span>{eventInfo?.location}</span>
             </div>
           </div>
-          <button className="px-6 py-2 bg-[#006400] hover:bg-primary-dark text-white rounded-lg transition-colors">
+          {/* <button className="px-6 py-2 bg-[#006400] hover:bg-primary-dark text-white rounded-lg transition-colors">
             Unpublish
-          </button>
+          </button> */}
         </div>
         <div>
           <img
@@ -312,7 +358,10 @@ export default function EventDetail() {
           <h3 className="font-semibold text-gray-900">
             {eventInfo?.attendees.length} Attendees
           </h3>
-          <button className="flex items-center gap-2 text-primary hover:underline text-sm">
+          <button 
+            onClick={exportToExcel}
+            className="flex items-center gap-2 text-primary hover:underline text-sm"
+          >
             Export attendees
             <ArrowUpRight className="w-4 h-4" />
           </button>
@@ -325,18 +374,7 @@ export default function EventDetail() {
               type="text"
               placeholder="Search by name"
               value={searchQuery}
-              onChange={(e) => {
-                const query = e.target.value.toLowerCase();
-                setSearchQuery(query);
-                if (query.trim() === "") {
-                  setFilteredAttendees(allAttendees);
-                } else {
-                  const filtered = allAttendees.filter((attendee) =>
-                    attendee?.scout?.fullName?.toLowerCase().includes(query)
-                  );
-                  setFilteredAttendees(filtered);
-                }
-              }}
+              onChange={handleSearch}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>

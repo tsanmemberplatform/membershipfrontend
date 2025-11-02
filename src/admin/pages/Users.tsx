@@ -388,7 +388,7 @@ export default function Users() {
   // Get unique roles from users data
   const uniqueRoles = useMemo(() => {
     const roles = allUsers
-      .map((user) => user.role)
+      .map((user) => user.displayRole)
       .filter((role) => role && role.trim() !== "");
     return [...new Set(roles)].sort();
   }, [allUsers]);
@@ -399,7 +399,7 @@ export default function Users() {
 
     // Apply role filter
     if (roleFilter) {
-      filtered = filtered.filter((user) => user.role === roleFilter);
+      filtered = filtered.filter((user) => user.displayRole === roleFilter);
     }
 
     // Apply state council filter
@@ -635,7 +635,11 @@ export default function Users() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.lastSignedIn ? new Date(user.lastSignedIn).toLocaleDateString('en-GB') : 'N/A'}
+                        {user.lastSignedIn
+                          ? new Date(user.lastSignedIn).toLocaleDateString(
+                              "en-GB"
+                            )
+                          : "N/A"}
                       </td>
                     </tr>
                   ))

@@ -66,7 +66,7 @@ export default function Modal({
 
       {/* Modal */}
       <div
-        className={`relative w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl`}
+        className={`relative w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl mt-[50px]`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
