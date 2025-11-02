@@ -1883,7 +1883,7 @@ function ProfileModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Profile Management"
-      size="full"
+      size="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -2070,6 +2070,8 @@ function ProfileModal({
               id="phoneNumber"
               value={formData.phoneNumber}
               onChange={(e) => handleChange("phoneNumber", e.target.value)}
+              maxLength={11}
+              minLength={11}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-green-500 focus:outline-none focus:ring-green-500 sm:text-sm"
               disabled={isSubmitting || isUpdating}
             />
