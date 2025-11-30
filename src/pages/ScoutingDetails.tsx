@@ -45,6 +45,7 @@ export const nigerianStateCouncils = [
 
 export const ScoutingDetails: React.FC = () => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isValidCouncil, setIsValidCouncil] = useState(true);
   const [formData, setFormData] = useState(() => {
     const savedData = localStorage.getItem("signupInfo");
     const parsedData = savedData ? JSON.parse(savedData) : {};
@@ -74,6 +75,15 @@ export const ScoutingDetails: React.FC = () => {
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate that the state council is in the list
+    const isValid = nigerianStateCouncils.includes(formData.stateScoutCouncil);
+    setIsValidCouncil(isValid);
+
+    if (!isValid) {
+      return;
+    }
+
     localStorage.setItem(
       "signupInfo",
       JSON.stringify({
@@ -147,10 +157,13 @@ export const ScoutingDetails: React.FC = () => {
                 onChange={(e) => {
                   handleInputChange("stateScoutCouncil", e.target.value);
                   setShowDropdown(true);
+                  setIsValidCouncil(true);
                 }}
                 onFocus={() => setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 pr-10"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 pr-10 ${
+                  !isValidCouncil ? "border-red-500" : "border-gray-300"
+                }`}
                 placeholder="Search state council..."
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -184,12 +197,18 @@ export const ScoutingDetails: React.FC = () => {
                       onClick={() => {
                         handleInputChange("stateScoutCouncil", council);
                         setShowDropdown(false);
+                        setIsValidCouncil(true);
                       }}
                     >
                       {council}
                     </div>
                   ))}
               </div>
+            )}
+            {!isValidCouncil && (
+              <p className="text-sm text-red-600 mt-1">
+                Please select a valid state council from the list
+              </p>
             )}
           </div>
 
