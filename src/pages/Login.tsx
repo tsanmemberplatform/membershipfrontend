@@ -1,6 +1,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { validateEmailOrPhone } from "../utils/validation";
 import Swal from "sweetalert2";
@@ -10,6 +11,7 @@ import { apiUtils } from "../services/api";
 const Login: React.FC = () => {
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,6 +34,10 @@ const Login: React.FC = () => {
       navigate("/signup/activate");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    localStorage.removeItem("signupInfo");
+  }, []);
 
   // Handle cross-tab logout messages
   useEffect(() => {
@@ -161,22 +167,35 @@ const Login: React.FC = () => {
           />
         </div>
 
-        <div>
+        <div className="relative">
           <label htmlFor="password" className="sr-only">
             Password
           </label>
           <input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoComplete="current-password"
             required
-            className="auth-input"
+            className="auth-input pr-10"
             placeholder="Enter password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={authLoading}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50"
+            disabled={authLoading}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
+            )}
+          </button>
         </div>
 
         <div className="flex justify-end">
