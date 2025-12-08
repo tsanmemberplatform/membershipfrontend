@@ -502,7 +502,7 @@ export default function Reports() {
           >
             <option value="All">All state council</option>
             {nigerianStates.map((state) => (
-              <option key={state} value={state}>
+              <option key={state} value={state + " State Scout Council"}>
                 {state}
               </option>
             ))}
