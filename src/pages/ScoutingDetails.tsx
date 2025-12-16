@@ -155,12 +155,34 @@ export const ScoutingDetails: React.FC = () => {
                 required
                 value={formData.stateScoutCouncil}
                 onChange={(e) => {
-                  handleInputChange("stateScoutCouncil", e.target.value);
+                  const value = e.target.value;
+                  handleInputChange("stateScoutCouncil", value);
                   setShowDropdown(true);
-                  setIsValidCouncil(true);
+
+                  // Validate if the typed value exists in the councils array
+                  // Only show error if user has typed something and it's not in the list
+                  if (value.trim() === "") {
+                    setIsValidCouncil(true);
+                  } else {
+                    const isValid = nigerianStateCouncils.some(
+                      (council) => council.toLowerCase() === value.toLowerCase()
+                    );
+                    setIsValidCouncil(isValid);
+                  }
                 }}
                 onFocus={() => setShowDropdown(true)}
-                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                onBlur={() => {
+                  setTimeout(() => setShowDropdown(false), 200);
+                  // Final validation when user leaves the field
+                  if (formData.stateScoutCouncil.trim() !== "") {
+                    const isValid = nigerianStateCouncils.some(
+                      (council) =>
+                        council.toLowerCase() ===
+                        formData.stateScoutCouncil.toLowerCase()
+                    );
+                    setIsValidCouncil(isValid);
+                  }
+                }}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 pr-10 ${
                   !isValidCouncil ? "border-red-500" : "border-gray-300"
                 }`}
@@ -205,9 +227,10 @@ export const ScoutingDetails: React.FC = () => {
                   ))}
               </div>
             )}
-            {!isValidCouncil && (
+            {!isValidCouncil && formData.stateScoutCouncil.trim() !== "" && (
               <p className="text-sm text-red-600 mt-1">
-                Please select a valid state council from the list
+                "{formData.stateScoutCouncil}" is not a valid state council.
+                Please select from the dropdown list.
               </p>
             )}
           </div>
