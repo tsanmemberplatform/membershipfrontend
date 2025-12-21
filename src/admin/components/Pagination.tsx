@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface PaginationProps {
   currentPage: number;
@@ -15,8 +16,27 @@ export default function Pagination({
   totalItems,
   itemsPerPage,
 }: PaginationProps) {
+  const [goToPage, setGoToPage] = useState(currentPage);
+
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  const handleGoToPage = () => {
+    if (goToPage >= 1 && goToPage <= totalPages) {
+      onPageChange(goToPage);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleGoToPage();
+    }
+  };
+
+  // Update goToPage when currentPage changes
+  useEffect(() => {
+    setGoToPage(currentPage);
+  }, [currentPage]);
 
   return (
     <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
@@ -50,19 +70,14 @@ export default function Pagination({
             min="1"
             max={totalPages}
             className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
-            defaultValue={currentPage}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                const value = Number.parseInt(
-                  (e.target as HTMLInputElement).value
-                );
-                if (value >= 1 && value <= totalPages) {
-                  onPageChange(value);
-                }
-              }
-            }}
+            value={goToPage}
+            onChange={(e) => setGoToPage(Number.parseInt(e.target.value) || 1)}
+            onKeyDown={handleKeyDown}
           />
-          <button className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm font-medium">
+          <button
+            onClick={handleGoToPage}
+            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm font-medium"
+          >
             Go
           </button>
         </div>

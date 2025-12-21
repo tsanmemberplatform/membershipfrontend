@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import StatCard from "../components/StatCard";
@@ -53,66 +53,108 @@ export default function Roster() {
   const [stateCouncilFilter, setStateCouncilFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [allUsers, setAllUsers] = useState<Scout[]>([]); // Store all users for client-side filtering
 
-  // Get unique state councils from users data
-  const uniqueStateCouncils = useMemo(() => {
-    const councils = allUsers
-      .map((user) => user.stateScoutCouncil)
-      .filter((council) => council && council.trim() !== "");
-    return [...new Set(councils)].sort();
-  }, [allUsers]);
+  const getAllUsers = async (page = 1) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", "20"); // 20 scouts per page
+      params.append("sort", "-createdAt");
 
-  // Client-side filtered users
-  const filteredUsers = useMemo(() => {
-    let filtered = allUsers;
+      // Add filters to API call
+      if (statusFilter) params.append("status", statusFilter);
+      if (sectionFilter) params.append("section", sectionFilter);
+      if (stateCouncilFilter)
+        params.append(
+          "stateScoutCouncil",
+          stateCouncilFilter + " State Scout Council"
+        );
+      if (debouncedSearchQuery.trim())
+        params.append("search", debouncedSearchQuery.trim());
 
-    // Apply status filter
-    if (statusFilter) {
-      filtered = filtered.filter((user) => user.status === statusFilter);
+      const response = await adminAPI.getAllUsers(`?${params.toString()}`);
+      if (response.status) {
+        setUsers(response.data);
+        // Set pagination info from server response
+        if (response.pagination) {
+          setTotalUsers(response.pagination.totalUsers || 0);
+          setTotalPages(response.pagination.totalPages || 1);
+          console.log("from roster", response.pagination);
+        }
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Apply section filter
-    if (sectionFilter) {
-      filtered = filtered.filter((user) => user.section === sectionFilter);
+  // Get unique state councils - we'll need to fetch this separately or from stats
+  const [uniqueStateCouncils, setUniqueStateCouncils] = useState<string[]>([]);
+
+  const getStateCouncils = async () => {
+    try {
+      // You might need to create a separate API endpoint for this
+      // For now, we'll use a basic set of common state councils
+      const councils = [
+        "Abia",
+        "Adamawa",
+        "Akwa Ibom",
+        "Anambra",
+        "Bauchi",
+        "Bayelsa",
+        "Benue",
+        "Borno",
+        "Cross River",
+        "Delta",
+        "Ebonyi",
+        "Edo",
+        "Ekiti",
+        "Enugu",
+        "FCT",
+        "Gombe",
+        "Imo",
+        "Jigawa",
+        "Kaduna",
+        "Kano",
+        "Katsina",
+        "Kebbi",
+        "Kogi",
+        "Kwara",
+        "Lagos",
+        "Nasarawa",
+        "Niger",
+        "Ogun",
+        "Ondo",
+        "Osun",
+        "Oyo",
+        "Plateau",
+        "Rivers",
+        "Sokoto",
+        "Taraba",
+        "Yobe",
+        "Zamfara",
+      ];
+      setUniqueStateCouncils(councils);
+    } catch (err) {
+      console.log("Error fetching state councils:", err);
     }
+  };
 
-    // Apply state council filter
-    if (stateCouncilFilter) {
-      filtered = filtered.filter(
-        (user) => user.stateScoutCouncil === stateCouncilFilter
-      );
-    }
+  // Remove client-side filtering since we're doing server-side pagination
+  // const filteredUsers = useMemo(() => {
+  //   // Server-side filtering is now handled in getAllUsers
+  // }, []);
 
-    // Apply search filter
-    if (debouncedSearchQuery.trim()) {
-      const searchTerm = debouncedSearchQuery.toLowerCase().trim();
-      filtered = filtered.filter(
-        (user) =>
-          user.fullName?.toLowerCase().includes(searchTerm) ||
-          user.membershipId?.toLowerCase().includes(searchTerm)
-      );
-    }
+  // Remove client-side pagination since we're doing server-side pagination
+  // const paginatedUsers = useMemo(() => {
+  //   // Server-side pagination is now handled in getAllUsers
+  // }, []);
 
-    return filtered;
-  }, [
-    allUsers,
-    statusFilter,
-    sectionFilter,
-    stateCouncilFilter,
-    debouncedSearchQuery,
-  ]);
-
-  // Paginated users from filtered results
-  const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * 20;
-    const endIndex = startIndex + 20;
-    return filteredUsers.slice(startIndex, endIndex);
-  }, [filteredUsers, currentPage]);
-
-  // Calculate pagination info from filtered results
-  const totalFilteredUsers = filteredUsers.length;
-  const calculatedTotalPages = Math.ceil(totalFilteredUsers / 20);
+  // Remove client-side pagination calculations
+  // const totalFilteredUsers = filteredUsers.length;
+  // const calculatedTotalPages = Math.ceil(totalFilteredUsers / 20);
 
   // Clear all filters
   const clearFilters = () => {
@@ -121,34 +163,6 @@ export default function Roster() {
     setStateCouncilFilter("");
     setSearchQuery("");
     setDebouncedSearchQuery("");
-  };
-
-  const getAllUsers = async () => {
-    setLoading(true);
-    try {
-      // Fetch all users for client-side filtering to ensure search works properly
-      // This approach guarantees that search by fullName and membershipId works
-      // regardless of backend search implementation
-      const params = new URLSearchParams();
-      params.append("page", "1");
-      params.append("limit", "500"); // Get a reasonable number of users for client-side filtering
-      params.append("sort", "-createdAt");
-
-      const response = await adminAPI.getAllUsers(`?${params.toString()}`);
-      if (response.status) {
-        setAllUsers(response.data);
-        setUsers(response.data);
-        // Set initial pagination info
-        if (response.pagination) {
-          setTotalUsers(response.pagination.totalUsers || 0);
-        }
-      }
-      // console.log(response);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const getRosterStats = async () => {
@@ -168,8 +182,9 @@ export default function Roster() {
   };
 
   useEffect(() => {
-    getAllUsers();
+    getAllUsers(1); // Start with page 1
     getRosterStats();
+    getStateCouncils();
   }, []);
 
   // Debounce search query
@@ -181,17 +196,17 @@ export default function Roster() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 and fetch new data when filters change
   useEffect(() => {
     setCurrentPage(1);
+    getAllUsers(1);
   }, [statusFilter, sectionFilter, stateCouncilFilter, debouncedSearchQuery]);
 
-  // Update users and pagination when filters or page changes
-  useEffect(() => {
-    setUsers(paginatedUsers);
-    setTotalUsers(totalFilteredUsers);
-    setTotalPages(calculatedTotalPages);
-  }, [paginatedUsers, totalFilteredUsers, calculatedTotalPages]);
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    getAllUsers(page);
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -250,7 +265,7 @@ export default function Roster() {
         <div className="p-4 sm:p-6 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-sm sm:text-base text-gray-900">
-              {totalUsers} Scouts
+              {/* {totalUsers} Scouts */}
             </h3>
             {(statusFilter ||
               sectionFilter ||
@@ -444,7 +459,7 @@ export default function Roster() {
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={(p) => setCurrentPage(p)}
+          onPageChange={handlePageChange}
           totalItems={totalUsers}
           itemsPerPage={20}
         />
